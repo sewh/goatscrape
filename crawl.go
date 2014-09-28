@@ -11,11 +11,11 @@ import (
 	"sync"
 )
 
-// Type ParseFunc defines a function that takes a HTTP response,
+// ParseFunc defines a function that takes a HTTP response,
 // and returns a string slice of further URLs to crawl.
 type ParseFunc func(*http.Response) []string
 
-// Type PreRequestFunc is a function that modifies an existing
+// PreRequestFunc is a function that modifies an existing
 // http.Request object before it is made to a web server. It
 // can be used for, as an example, modifying the user agent
 // header before each request.
@@ -34,6 +34,8 @@ type Spider struct {
 	// that should be added to the crawl.
 	Parse                ParseFunc
 	PreRequestMiddleware []PreRequestFunc
+
+	Verbose bool
 
 	// Unexported fields
 	lists struct {
@@ -54,6 +56,9 @@ type Spider struct {
 	wg sync.WaitGroup
 }
 
+// AddPreRequestMiddleware takes a veradic amount of PreRequestFunc
+// arguments, and make sure each of the functions added are called
+// on the http.Request object before a request is made.
 func (s *Spider) AddPreRequestMiddleware(funcs ...PreRequestFunc) {
 	s.hasPreRequestMiddleware = true
 	for _, f := range funcs {
@@ -197,7 +202,7 @@ func (s *Spider) getPage(uri string) {
 	defer func() {
 		s.wg.Done()
 	}()
-	if err != nil {
+	if err != nil && s.Verbose {
 		log.Println("[" + s.Name + "] " + err.Error())
 		return
 	}
@@ -210,7 +215,14 @@ func (s *Spider) getPage(uri string) {
 	if s.hasParse {
 		links := s.Parse(resp)
 		s.lists.lock.Lock()
+
+		// Add the parsed links to the list, provided
+		// it's a valid link
 		for _, l := range links {
+			err = s.verifyURL(l)
+			if err != nil {
+				continue
+			}
 			if !s.doesLinkExist(l) {
 				s.lists.toCrawl = append(s.lists.toCrawl, l)
 			}
