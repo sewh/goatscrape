@@ -26,13 +26,12 @@ func ExtractAllLinks(resp *http.Response) []string {
 
 	doc.Find("a").Each(func(i int, s *goquery.Selection) {
 		href, exists := s.Attr("href")
-		if href == "" {
-			return
-		}
-		if href[0] == '#' {
-			return
-		}
-		if exists {
+
+		if exists && href != "" {
+
+			if href[0] == '#' {
+				return
+			}
 			if href[0] == '/' {
 				href = uri + href
 			}
