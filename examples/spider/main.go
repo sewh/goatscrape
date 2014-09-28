@@ -1,7 +1,9 @@
-// This example starts with a few seed urls,
-// and includes a parse function that always returns
-// the same URL. This demonstrates the built in
-// URL sanitisers offered by the framework.
+// This example loads five pages from XKCD, one page
+// at a time. It extracts all the links for each page
+// crawled using the middleware.ExtractAllLinks function.
+// Since only the XKCD domain is allowed, only
+// XKCD pages are crawled. It also uses the
+// middleware.RandomiseUserAgent function.
 package main
 
 import (
