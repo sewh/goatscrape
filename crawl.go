@@ -208,6 +208,7 @@ func (s *Spider) deleteFromToCrawl(url string) {
 }
 
 func (s *Spider) getPage(uri string) {
+	// Make sure the page is okay to have a GET request issued.
 	err := s.verifyURL(uri)
 	err2 := s.getAndValidateHead(uri)
 	defer func() {
@@ -218,8 +219,10 @@ func (s *Spider) getPage(uri string) {
 		return
 	} else if err2 != nil && s.Verbose {
 		log.Println("[" + s.Name + "] " + err2.Error())
+		return
 	}
 
+	// The page is fine, we can now crawl it.
 	req, _ := http.NewRequest("GET", uri, nil)
 	s.processRequestMiddleware(req)
 
