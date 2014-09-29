@@ -39,6 +39,8 @@ type Spider struct {
 
 	Verbose bool
 
+	Client http.Client
+
 	// Unexported fields
 	lists struct {
 		crawled []string
@@ -52,8 +54,6 @@ type Spider struct {
 	hasParse                bool
 
 	totalSpidered int
-
-	client http.Client
 
 	wg sync.WaitGroup
 }
@@ -212,7 +212,7 @@ func (s *Spider) getPage(uri string) {
 	req, _ := http.NewRequest("GET", uri, nil)
 	s.processRequestMiddleware(req)
 
-	resp, err := s.client.Do(req)
+	resp, err := s.Client.Do(req)
 	log.Println("[" + s.Name + "] Spidered " + uri)
 	if s.hasParse {
 		links := s.Parse(resp)
