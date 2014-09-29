@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -32,7 +33,10 @@ func ExtractAllLinks(resp *http.Response) []string {
 			if href[0] == '#' {
 				return
 			}
-			if href[0] == '/' {
+			if strings.HasPrefix(href, "//") {
+				href = "http:" + href
+			}
+			if strings.HasPrefix(href, "/") {
 				href = uri + href
 			}
 			links = append(links, href)
