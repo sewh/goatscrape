@@ -22,6 +22,7 @@ Any contributions greatfully received :)
 * ~~Add a cookie store~~
     * Changed the http.Client that's used by the spider to public so theoretically you could just use the http.Client's API to do this.
 * Add more URL validation (such as automatic expansions for relative URLS)
+    * Still debating on how much of this should be the Parse functions responsibility. Doing it within the framework could result in a loss of functionality.
 * Add some more ready-to-go middleware functions
 * Add some ready-to-go parse functions (such as get all hrefs from a page, for example)
 * Clean up the code (there's places where some code duplication has occured)
