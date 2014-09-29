@@ -19,7 +19,7 @@ Any contributions greatfully received :)
 
 * Unit tests (at some point)
 * More sophisticated examples
-* ~~~Add a cookie store~~~
+* ~~Add a cookie store~~
     * Changed the http.Client that's used by the spider to public so theoretically you could just use the http.Client's API to do this.
 * Add more URL validation (such as automatic expansions for relative URLS)
 * Add some more ready-to-go middleware functions
