@@ -214,11 +214,15 @@ func (s *Spider) getPage(uri string) {
 	defer func() {
 		s.wg.Done()
 	}()
-	if err != nil && s.Verbose {
-		log.Println("[" + s.Name + "] " + err.Error())
+	if err != nil {
+		if s.Verbose {
+			log.Println("[" + s.Name + "] " + err.Error())
+		}
 		return
 	} else if err2 != nil && s.Verbose {
-		log.Println("[" + s.Name + "] " + err2.Error())
+		if s.Verbose {
+			log.Println("[" + s.Name + "] " + err2.Error())
+		}
 		return
 	}
 
@@ -302,13 +306,16 @@ func (s *Spider) isPageDisallowed(uri string) error {
 }
 
 func (s *Spider) getAndValidateHead(uri string) error {
-	resp, err := s.Client.Head(uri)
+	req, _ := http.NewRequest("HEAD", uri, nil)
+	s.processRequestMiddleware(req)
+
+	resp, err := s.Client.Do(req)
 	if err != nil {
 		return err
 	}
 
 	// Is resource okay?
-	if resp.StatusCode != 200 {
+	if !(resp.StatusCode/100 == 2 || resp.StatusCode/100 == 3) {
 		return errors.New(uri + " returned non-okay status code " + resp.Status)
 	}
 
