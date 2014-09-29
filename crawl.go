@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"sync"
 )
 
@@ -52,6 +53,7 @@ type Spider struct {
 	hasMaxPages             bool
 	hasPreRequestMiddleware bool
 	hasParse                bool
+	hasDisallowed           bool
 
 	totalSpidered int
 
@@ -99,6 +101,12 @@ func (s *Spider) validateSettings() error {
 
 	if len(s.StartingURLs) == 0 {
 		return errors.New("Crawl must have starting URLs.")
+	}
+
+	if len(s.DisallowedPages) > 0 {
+		s.hasDisallowed = true
+	} else {
+		s.hasDisallowed = false
 	}
 
 	if s.Parse != nil {
@@ -201,12 +209,15 @@ func (s *Spider) deleteFromToCrawl(url string) {
 
 func (s *Spider) getPage(uri string) {
 	err := s.verifyURL(uri)
+	err2 := s.getAndValidateHead(uri)
 	defer func() {
 		s.wg.Done()
 	}()
 	if err != nil && s.Verbose {
 		log.Println("[" + s.Name + "] " + err.Error())
 		return
+	} else if err2 != nil && s.Verbose {
+		log.Println("[" + s.Name + "] " + err2.Error())
 	}
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -275,10 +286,32 @@ func (s *Spider) verifyURL(uri string) error {
 }
 
 func (s *Spider) isPageDisallowed(uri string) error {
+	if !s.hasDisallowed {
+		return nil
+	}
 	for _, r := range s.DisallowedPages {
 		if len(r.FindAllString(uri, 1)) > 0 {
 			return errors.New(uri + " is disallowed.")
 		}
+	}
+
+	return nil
+}
+
+func (s *Spider) getAndValidateHead(uri string) error {
+	resp, err := s.Client.Head(uri)
+	if err != nil {
+		return err
+	}
+
+	// Is resource okay?
+	if resp.StatusCode != 200 {
+		return errors.New(uri + " returned non-okay status code " + resp.Status)
+	}
+
+	// Is a HTML page?
+	if !strings.Contains(resp.Header.Get("Content-Type"), "html") {
+		return errors.New(uri + " not a HTML page.")
 	}
 
 	return nil
