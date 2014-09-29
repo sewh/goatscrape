@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sync"
 )
 
@@ -27,6 +28,7 @@ type Spider struct {
 	Name                  string
 	StartingURLs          []string
 	AllowedDomains        []string
+	DisallowedPages       []regexp.Regexp
 	MaxPages              int
 	MaxConcurrentRequests int
 
@@ -220,7 +222,8 @@ func (s *Spider) getPage(uri string) {
 		// it's a valid link
 		for _, l := range links {
 			err = s.verifyURL(l)
-			if err != nil {
+			err2 := s.isPageDisallowed(l)
+			if err != nil || err2 != nil {
 				continue
 			}
 			if !s.doesLinkExist(l) {
@@ -266,6 +269,16 @@ func (s *Spider) verifyURL(uri string) error {
 	}
 	if !shouldContinue {
 		return errors.New(uri + " not listed as allowed in spider settings.")
+	}
+
+	return nil
+}
+
+func (s *Spider) isPageDisallowed(uri string) error {
+	for _, r := range s.DisallowedPages {
+		if len(r.FindAllString(uri, 1)) > 0 {
+			return errors.New(uri + " is disallowed.")
+		}
 	}
 
 	return nil

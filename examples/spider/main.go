@@ -7,6 +7,8 @@
 package main
 
 import (
+	"regexp"
+
 	"github.com/stevie-holdway/goscrape"
 	"github.com/stevie-holdway/goscrape/middleware"
 )
@@ -20,7 +22,8 @@ func main() {
 		AllowedDomains: []string{
 			"www.xkcd.com",
 		},
-		MaxPages:              5,
+		DisallowedPages:       []regexp.Regexp{*regexp.MustCompile("http://www.xkcd.com/about")},
+		MaxPages:              10,
 		MaxConcurrentRequests: 1,
 		Parse: middleware.ExtractAllLinks,
 	}
