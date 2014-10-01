@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/stevie-holdway/goscrape"
-	"github.com/stevie-holdway/goscrape/middleware"
 )
 
 func main() {
@@ -30,7 +29,7 @@ func main() {
 			return m
 		},
 	}
-	example.AddPreRequestMiddleware(middleware.RandomiseUserAgent)
+	example.AddPreRequestMiddleware(plugins.RandomiseUserAgent)
 
 	example.Start()
 }

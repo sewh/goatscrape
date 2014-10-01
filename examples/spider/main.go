@@ -1,16 +1,16 @@
 // This example loads five pages from XKCD, one page
 // at a time. It extracts all the links for each page
-// crawled using the middleware.ExtractAllLinks function.
+// crawled using the plugins.ExtractAllLinks function.
 // Since only the XKCD domain is allowed, only
 // XKCD pages are crawled. It also uses the
-// middleware.RandomiseUserAgent function.
+// plugins.RandomiseUserAgent function.
 package main
 
 import (
 	"regexp"
 
 	"github.com/stevie-holdway/goscrape"
-	"github.com/stevie-holdway/goscrape/middleware"
+	"github.com/stevie-holdway/goscrape/plugins"
 )
 
 func main() {
@@ -25,10 +25,10 @@ func main() {
 		DisallowedPages:       []regexp.Regexp{*regexp.MustCompile("http://www.xkcd.com/about")},
 		MaxPages:              10,
 		MaxConcurrentRequests: 1,
-		Parse:   middleware.ExtractAllLinks,
+		Parse:   plugins.ExtractAllLinks,
 		Verbose: true,
 	}
-	example.AddPreRequestMiddleware(middleware.RandomiseUserAgent)
+	example.AddPreRequestMiddleware(plugins.RandomiseUserAgent)
 
 	example.Start()
 }
