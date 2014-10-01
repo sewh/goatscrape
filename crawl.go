@@ -13,6 +13,23 @@ import (
 	"sync"
 )
 
+// LinkStore defines the interface that any object that looks
+// to store, and manage, the toCrawl and the crawled lists should
+// implement. All the methods in this interface are expected to be thread safe.
+type LinkStore interface {
+	// GetLinks should return a string slice of links to crawl, in the
+	// amount defined in the amount paramter.
+	GetLinks(amount int) []string
+	// AddToCrawl should add the link parameter to the to crawl list.
+	AddToCrawl(link string)
+	// MoveToCrawled should delete the link in the to crawl list and
+	// place it in the crawled list.
+	MoveToCrawled(link string)
+	// MoreToCrawl returns a boolean value if there are still links
+	// in the to crawl list.
+	MoreToCrawl() bool
+}
+
 // ParseFunc defines a function that takes a HTTP response,
 // and returns a string slice of further URLs to crawl.
 type ParseFunc func(*http.Response) []string
@@ -42,12 +59,7 @@ type Spider struct {
 
 	Client http.Client
 
-	// Unexported fields
-	lists struct {
-		crawled []string
-		toCrawl []string
-		lock    sync.Mutex
-	}
+	Links LinkStore
 
 	hasAllowedDomains       bool
 	hasMaxPages             bool
@@ -103,6 +115,10 @@ func (s *Spider) validateSettings() error {
 		return errors.New("Crawl must have starting URLs.")
 	}
 
+	if s.Links == nil {
+		return errors.New("Spider must have a link store.")
+	}
+
 	if len(s.DisallowedPages) > 0 {
 		s.hasDisallowed = true
 	} else {
@@ -141,69 +157,43 @@ func (s *Spider) validateSettings() error {
 
 	return nil
 }
-
 func (s *Spider) crawlLoop() error {
-	for len(s.lists.toCrawl) != 0 {
-		var temp []string
+	for s.Links.MoreToCrawl() {
 
+		// Exit if we have spidered the maximum amount of pages.
 		if s.hasMaxPages {
 			if s.totalSpidered >= s.MaxPages {
 				return nil
 			}
 		}
-		// Load in the URLS to be gotten
-		counter := 0
-		for _, elem := range s.lists.toCrawl {
-			if counter == s.MaxConcurrentRequests {
-				break
-			}
-			if s.hasMaxPages {
-				if (s.totalSpidered + counter) >= s.MaxPages {
-					break
-				}
-			}
-			counter++
 
-			temp = append(temp, elem)
+		// Load in the URLS to be gotten into a temporary buffer, never exceeding
+		// the amount of
+		amountToGet := s.MaxConcurrentRequests
+		if s.hasMaxPages && (s.totalSpidered+amountToGet) >= s.MaxPages {
+			// Only get the delta from MaxPages take totalSpidered
+			amountToGet = s.MaxPages - s.totalSpidered
 		}
+		temp := s.Links.GetLinks(amountToGet)
 
-		s.wg.Add(counter)
+		s.wg.Add(len(temp)) // Add the amount of links to the wait group.
 
 		// Crawl each page, and call the parse function
 		for _, uri := range temp {
-			// Abort if we have spidered too many pages
-			if s.hasMaxPages {
-				if s.totalSpidered >= s.MaxPages {
-					continue
-				}
-			}
-			// Move the current url to the crawled list
-			s.lists.lock.Lock()
-			s.lists.crawled = append(s.lists.crawled, uri)
-			s.deleteFromToCrawl(uri)
-			s.lists.lock.Unlock()
-
-			// Begin the crawl part
+			s.Links.MoveToCrawled(uri)
 			go s.getPage(uri)
 			s.totalSpidered++
 		}
-		s.wg.Wait()
+		s.wg.Wait() // Wait for all the pages to be downloaded
 	}
+
+	log.Println("[" + s.Name + "] has completed.")
 	return nil
 }
 
 func (s *Spider) loadStartingURLS() {
-	for _, url := range s.StartingURLs {
-		s.lists.toCrawl = append(s.lists.toCrawl, url)
-	}
-}
-
-func (s *Spider) deleteFromToCrawl(url string) {
-	for i, e := range s.lists.toCrawl {
-		if e == url {
-			// Thank the good baby Jesus for SliceTricks...
-			s.lists.toCrawl = append(s.lists.toCrawl[:i], s.lists.toCrawl[i+1:]...)
-		}
+	for _, link := range s.StartingURLs {
+		s.Links.AddToCrawl(link)
 	}
 }
 
@@ -212,7 +202,7 @@ func (s *Spider) getPage(uri string) {
 	err := s.verifyURL(uri)
 	err2 := s.getAndValidateHead(uri)
 	defer func() {
-		s.wg.Done()
+		s.wg.Done() // Make sure we mark this is done at the end of the function.
 	}()
 	if err != nil {
 		if s.Verbose {
@@ -231,42 +221,29 @@ func (s *Spider) getPage(uri string) {
 	s.processRequestMiddleware(req)
 
 	resp, err := s.Client.Do(req)
+	if err != nil {
+		return
+	}
+
 	log.Println("[" + s.Name + "] Spidered " + uri)
+	// Call the user defined parse function if it exists and add all links
+	// generated from it to the to crawl list
 	if s.hasParse {
 		links := s.Parse(resp)
-		s.lists.lock.Lock()
 
 		// Add the parsed links to the list, provided
 		// it's a valid link
 		for _, l := range links {
-			err = s.verifyURL(l)
+			err1 := s.verifyURL(l)
 			err2 := s.isPageDisallowed(l)
-			if err != nil || err2 != nil {
+			if err1 != nil || err2 != nil {
 				continue
 			}
-			if !s.doesLinkExist(l) {
-				s.lists.toCrawl = append(s.lists.toCrawl, l)
-			}
-		}
-		s.lists.lock.Unlock()
-	}
 
-}
-
-func (s *Spider) doesLinkExist(uri string) bool {
-	for _, e := range s.lists.toCrawl {
-		if e == uri {
-			return true
+			s.Links.AddToCrawl(l)
 		}
 	}
 
-	for _, e := range s.lists.crawled {
-		if e == uri {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (s *Spider) verifyURL(uri string) error {

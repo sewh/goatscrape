@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/stevie-holdway/goscrape"
+	"github.com/stevie-holdway/goscrape/plugins"
 )
 
 func main() {
@@ -28,6 +29,8 @@ func main() {
 			m = append(m, "http://www.xkcd.com/3/")
 			return m
 		},
+		Links:   &plugins.BasicLinkStore{},
+		Verbose: true,
 	}
 	example.AddPreRequestMiddleware(plugins.RandomiseUserAgent)
 

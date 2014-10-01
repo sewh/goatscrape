@@ -26,6 +26,7 @@ func main() {
 		MaxPages:              10,
 		MaxConcurrentRequests: 1,
 		Parse:   plugins.ExtractAllLinks,
+		Links:   &plugins.BasicLinkStore{},
 		Verbose: true,
 	}
 	example.AddPreRequestMiddleware(plugins.RandomiseUserAgent)
