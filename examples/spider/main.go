@@ -9,12 +9,12 @@ package main
 import (
 	"regexp"
 
-	"github.com/stevie-holdway/goscrape"
-	"github.com/stevie-holdway/goscrape/plugins"
+	"github.com/stevie-holdway/goatscrape"
+	"github.com/stevie-holdway/goatscrape/plugins"
 )
 
 func main() {
-	example := goscrape.Spider{
+	example := goatscrape.Spider{
 		Name: "Example 1",
 		StartingURLs: []string{
 			"http://www.xkcd.com/",

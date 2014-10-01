@@ -1,7 +1,7 @@
-// Package goscrape is a web crawling and scraping
+// Package goatscrape is a web crawling and scraping
 // framework inspired by Scrapy, and built for my own entertainment.
 // The heart of the package is the Spider structure.
-package goscrape
+package goatscrape
 
 import (
 	"errors"
@@ -87,7 +87,7 @@ func (s *Spider) AddPreRequestMiddleware(funcs ...PreRequestFunc) {
 func (s *Spider) Start() (err error) {
 	err = s.validateSettings()
 	if err != nil {
-		log.Fatal("[goscrape] " + err.Error())
+		log.Fatal("[goatscrape] " + err.Error())
 	}
 
 	s.loadStartingURLS()
