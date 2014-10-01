@@ -1,6 +1,6 @@
 # goatscrape
 
-goatscrape is a web crawling/scraping framework for the Go language loosly inspired by Scrapy for Python. goatscrape was written for a few reasons;
+goatscrape is a web crawling/scraping framework for the Go language loosly inspired by Scrapy for Python. It favours composibility, and has the majority of its functionality seperated into plugins; making it easy to compose behaviour from default plugins or write your own. goatscrape was written for a few reasons;
 
 * To automate tasks where large amounts of HTTP content needs to be downloaded and processed;
 * To allow developers to produce a single statically linked Go binary for crawling tasks;
@@ -8,6 +8,8 @@ goatscrape is a web crawling/scraping framework for the Go language loosly inspi
 * ... but mainly because I was bored ;)
 
 See the examples directory for some runnable code examples.
+
+goatscrape was originally called 'goscrape' but it was altered when there were a few other projects with that name. Despite popular belief, it only scrapes goats if there is some kind of goat oriented website to crawl.
 
 ## Current Status
 
@@ -17,15 +19,13 @@ Any contributions greatfully received :)
 
 ## TODO List
 
+* A walkthrough guide and tutorial with some examples. Will do this when the API looks like it is pretty stable.
 * Unit tests (at some point)
-* More sophisticated examples
+* More sophisticated code examples
 * ~~Add a cookie store~~
     * Changed the http.Client that's used by the spider to public so theoretically you could just use the http.Client's API to do this.
-* Add more URL validation (such as automatic expansions for relative URLS)
-    * Still debating on how much of this should be the Parse functions responsibility. Doing it within the framework could result in a loss of functionality.
 * Add some more ready-to-go middleware functions
 * Add some ready-to-go parse functions (such as get all hrefs from a page, for example)
-* Clean up the code (there's places where some code duplication has occured)
-    * Currently need to do some more documentation to get it through go lint
+    * Already added one of these, maybe a few others will be added when I think of them
 * Add a clear redirect policy. Currently 301 redirects are automatically allowed, but this may not suit all scenarios. This will require syncing up the http.Client with the getAndVerifyHead function.
 * Sprinkle a little more awesome to take it from a toy to deployable tool
