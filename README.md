@@ -1,6 +1,6 @@
-# goscrape
+# goatscrape
 
-goscrape is a web crawling/scraping framework for the Go language loosly inspired by Scrapy for Python. goscrape was written for a few reasons;
+goatscrape is a web crawling/scraping framework for the Go language loosly inspired by Scrapy for Python. goatscrape was written for a few reasons;
 
 * To automate tasks where large amounts of HTTP content needs to be downloaded and processed;
 * To allow developers to produce a single statically linked Go binary for crawling tasks;
@@ -11,7 +11,7 @@ See the examples directory for some runnable code examples.
 
 ## Current Status
 
-goscrape is currently very alpha. There's a lot that I still want to do with it, but for my very small scale tests it seems to work as expected. That said, be warned that it's probably very buggy still.
+goatscrape is currently very alpha. There's a lot that I still want to do with it, but for my very small scale tests it seems to work as expected. That said, be warned that it's probably very buggy still.
 
 Any contributions greatfully received :)
 
