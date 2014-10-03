@@ -1,6 +1,13 @@
-// Package goatscrape is a web crawling and scraping
-// framework inspired by Scrapy, and built for my own entertainment.
-// The heart of the package is the Spider structure.
+// Package goatscrape is a web crawling and scraping framework. Its aim is to create a robust,
+// powerful, crawling framework out of the box that packages a lot of default behaviour into plugins.
+// It has the following advantages:
+//
+// 	- It is easy to use with the default plugins, but can be extended by those who need extra power or control;
+// 	- It is performant, natively using concurrency and allowing spider tasks to be compiled to a single binary;
+// 	- It can be used in multiple different use cases. It can be tailored to fit a range of tasks from basic screen
+// 	  scraping to a bespoke tool that pulls tasks of a work queue and publishes its findings to a database.
+//
+// It was originally written by Steven Holdway and is released under the MIT License for ease of static linking.
 package goatscrape
 
 import (
