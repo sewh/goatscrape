@@ -76,6 +76,8 @@ type Spider struct {
 
 	// Verbose will cause more diagnostic information to be outputted if it's set to true.
 	Verbose bool
+	// Quiet will repress all output to stdout or stderr
+	Quiet bool
 
 	// Client is the plain old http.Client used to execute all requests. It is public so developers can
 	// add a cookie store/other http.Client activities.
@@ -115,7 +117,9 @@ func (s *Spider) Start() (err error) {
 	}
 
 	s.loadStartingURLS()
-	log.Println("[" + s.Name + "] Starting Spider")
+	if !s.Quiet {
+		log.Println("[" + s.Name + "] Starting Spider")
+	}
 	s.crawlLoop()
 
 	return nil
@@ -212,7 +216,9 @@ func (s *Spider) crawlLoop() error {
 		s.wg.Wait() // Wait for all the pages to be downloaded
 	}
 
-	log.Println("[" + s.Name + "] has completed.")
+	if !s.Quiet {
+		log.Println("[" + s.Name + "] has completed.")
+	}
 	return nil
 }
 
@@ -230,12 +236,12 @@ func (s *Spider) getPage(uri string) {
 		s.wg.Done() // Make sure we mark this is done at the end of the function.
 	}()
 	if err != nil {
-		if s.Verbose {
+		if !s.Quiet && s.Verbose {
 			log.Println("[" + s.Name + "] " + err.Error())
 		}
 		return
 	} else if err2 != nil && s.Verbose {
-		if s.Verbose {
+		if !s.Quiet && s.Verbose {
 			log.Println("[" + s.Name + "] " + err2.Error())
 		}
 		return
@@ -250,7 +256,9 @@ func (s *Spider) getPage(uri string) {
 		return
 	}
 
-	log.Println("[" + s.Name + "] Spidered " + uri)
+	if !s.Quiet {
+		log.Println("[" + s.Name + "] Spidered " + uri)
+	}
 	// Call the user defined parse function if it exists and add all links
 	// generated from it to the to crawl list
 	if s.hasParse {
