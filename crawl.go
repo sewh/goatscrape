@@ -43,22 +43,39 @@ type PreRequestFunc func(*http.Request)
 // Spider defines a single scrape job. Clients should create a new
 // Spider instance and customise it before running the Start() method.
 type Spider struct {
-	Name                  string
-	StartingURLs          []string
-	AllowedDomains        []string
-	DisallowedPages       []regexp.Regexp
-	MaxPages              int
+	// Name is the unique scan name. It is currently use for logging purposes.
+	Name string
+	// StartingURLs is a string slice of all the URLs that will be loaded into
+	// the spider first. These should be used to seed the scanner.
+	StartingURLs []string
+	// AllowedDomains is a string slice with all the allowed domains. An empty
+	// slice will cause the spider to assume that there are no domains that are not allowed.
+	AllowedDomains []string
+	// DisallowedPages is a slice of regular expressions. Each expression is evaluated on all links
+	// returned from the Parse() function. If the expression matches then the link is not added to the
+	// to crawl list.
+	DisallowedPages []regexp.Regexp
+	// MaxPages is the maximum amount of pages to crawl before the scanner returns. A setting of zero or less
+	// causes the spider to assume there are no maximum pages.
+	MaxPages int
+	// MaxConcurrentRequests is the maximum amount of requests to run in parallel.
 	MaxConcurrentRequests int
 
-	// The Parse function should emit a list of urls
-	// that should be added to the crawl.
-	Parse                ParseFunc
+	// The Parse function should emit a list of urls that should be added to the crawl.
+	Parse ParseFunc
+	// PreRequestMiddleware is a slice of functions that implement PreRequestFunc. Each of these functions
+	// is called on the http.Request object before it is execute by the http.Client.
 	PreRequestMiddleware []PreRequestFunc
 
+	// Verbose will cause more diagnostic information to be outputted if it's set to true.
 	Verbose bool
 
+	// Client is the plain old http.Client used to execute all requests. It is public so developers can
+	// add a cookie store/other http.Client activities.
 	Client http.Client
 
+	// Links is the LinkStore object that is used by this spider. LinkStores are responsible for storing,
+	// and managing the crawled and the to crawl lists used by the spider during its operation.
 	Links LinkStore
 
 	hasAllowedDomains       bool
@@ -157,6 +174,7 @@ func (s *Spider) validateSettings() error {
 
 	return nil
 }
+
 func (s *Spider) crawlLoop() error {
 	for s.Links.MoreToCrawl() {
 
