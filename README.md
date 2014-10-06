@@ -23,7 +23,8 @@ Any contributions greatfully received :)
 * Unit tests (at some point)
 * More sophisticated code examples
 * ~~Add a cookie store~~
-    * Changed the http.Client that's used by the spider to public so theoretically you could just use the http.Client's API to do this.
+    * ~~Changed the http.Client that's used by the spider to public so theoretically you could just use the http.Client's API to do this.~~
+        * Added getter plugins. Will add a getter plugin that takes a user supplied http.Client in the future.
 * Add some more ready-to-go middleware functions
 * Add some ready-to-go parse functions (such as get all hrefs from a page, for example)
     * Already added one of these, maybe a few others will be added when I think of them
