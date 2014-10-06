@@ -29,6 +29,7 @@ func main() {
 			m = append(m, "http://www.xkcd.com/3/")
 			return m
 		},
+		Getter:  plugins.BasicGetter,
 		Links:   &plugins.BasicLinkStore{},
 		Verbose: true,
 	}

@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
-	"strings"
 	"sync"
 )
 
@@ -47,6 +46,11 @@ type ParseFunc func(*http.Response) []string
 // header before each request.
 type PreRequestFunc func(*http.Request)
 
+// RequestFunc should take a pre-constructed http.Request object and
+// return a http.Response object or an error. This is used for custom
+// getters within the spider object.
+type RequestFunc func(*http.Request) (*http.Response, error)
+
 // Spider defines a single scrape job. Clients should create a new
 // Spider instance and customise it before running the Start() method.
 type Spider struct {
@@ -73,15 +77,13 @@ type Spider struct {
 	// PreRequestMiddleware is a slice of functions that implement PreRequestFunc. Each of these functions
 	// is called on the http.Request object before it is execute by the http.Client.
 	PreRequestMiddleware []PreRequestFunc
+	// The function that gets a web page. Should take a http.Request and return a http.Response
+	Getter RequestFunc
 
 	// Verbose will cause more diagnostic information to be outputted if it's set to true.
 	Verbose bool
 	// Quiet will repress all output to stdout or stderr
 	Quiet bool
-
-	// Client is the plain old http.Client used to execute all requests. It is public so developers can
-	// add a cookie store/other http.Client activities.
-	Client http.Client
 
 	// Links is the LinkStore object that is used by this spider. LinkStores are responsible for storing,
 	// and managing the crawled and the to crawl lists used by the spider during its operation.
@@ -145,6 +147,10 @@ func (s *Spider) validateSettings() error {
 
 	if s.Links == nil {
 		return errors.New("Spider must have a link store.")
+	}
+
+	if s.Getter == nil {
+		return errors.New("Spider must have a getter.")
 	}
 
 	if len(s.DisallowedPages) > 0 {
@@ -231,7 +237,6 @@ func (s *Spider) loadStartingURLS() {
 func (s *Spider) getPage(uri string) {
 	// Make sure the page is okay to have a GET request issued.
 	err := s.verifyURL(uri)
-	err2 := s.getAndValidateHead(uri)
 	defer func() {
 		s.wg.Done() // Make sure we mark this is done at the end of the function.
 	}()
@@ -240,18 +245,13 @@ func (s *Spider) getPage(uri string) {
 			log.Println("[" + s.Name + "] " + err.Error())
 		}
 		return
-	} else if err2 != nil && s.Verbose {
-		if !s.Quiet && s.Verbose {
-			log.Println("[" + s.Name + "] " + err2.Error())
-		}
-		return
 	}
 
 	// The page is fine, we can now crawl it.
 	req, _ := http.NewRequest("GET", uri, nil)
 	s.processRequestMiddleware(req)
 
-	resp, err := s.Client.Do(req)
+	resp, err := s.Getter(req)
 	if err != nil {
 		return
 	}
@@ -310,28 +310,6 @@ func (s *Spider) isPageDisallowed(uri string) error {
 		if len(r.FindAllString(uri, 1)) > 0 {
 			return errors.New(uri + " is disallowed.")
 		}
-	}
-
-	return nil
-}
-
-func (s *Spider) getAndValidateHead(uri string) error {
-	req, _ := http.NewRequest("HEAD", uri, nil)
-	s.processRequestMiddleware(req)
-
-	resp, err := s.Client.Do(req)
-	if err != nil {
-		return err
-	}
-
-	// Is resource okay?
-	if !(resp.StatusCode/100 == 2 || resp.StatusCode/100 == 3) {
-		return errors.New(uri + " returned non-okay status code " + resp.Status)
-	}
-
-	// Is a HTML page?
-	if !strings.Contains(resp.Header.Get("Content-Type"), "html") {
-		return errors.New(uri + " not a HTML page.")
 	}
 
 	return nil

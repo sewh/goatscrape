@@ -25,9 +25,10 @@ func main() {
 		DisallowedPages:       []regexp.Regexp{*regexp.MustCompile("http://www.xkcd.com/about")},
 		MaxPages:              10,
 		MaxConcurrentRequests: 1,
-		Parse:   plugins.ExtractAllLinks,
-		Links:   &plugins.BasicLinkStore{},
-		Verbose: true,
+		Getter:                plugins.BasicGetter,
+		Parse:                 plugins.ExtractAllLinks,
+		Links:                 &plugins.BasicLinkStore{},
+		Verbose:               true,
 	}
 	example.AddPreRequestMiddleware(plugins.RandomiseUserAgent)
 
